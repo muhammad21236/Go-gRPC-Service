@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/muhammad21236/Go-gRPC-Service/internal/db"
 	"github.com/muhammad21236/Go-gRPC-Service/internal/rocket"
 )
@@ -9,6 +11,12 @@ func Run() error {
 	// Responsible for initializing the gRPC server and starting it.
 	rocketStore, err := db.New()
 	if err != nil {
+		return err
+	}
+
+	err = rocketStore.Migrate()
+	if err != nil {
+		log.Print("Failed to run migrations")
 		return err
 	}
 

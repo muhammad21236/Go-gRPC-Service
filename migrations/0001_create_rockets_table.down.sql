@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS rockets (
+    id serial NOT NULL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+);
