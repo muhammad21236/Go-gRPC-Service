@@ -2,9 +2,12 @@ package db
 
 import (
 	"os"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/muhammad21236/Go-gRPC-Service/internal/rocket"
+	_ "github.com/lib/pq"
+	"log"
 )
 
 type Store struct {
@@ -21,7 +24,30 @@ func New() (Store, error) {
 	dbSSLMode := os.Getenv("DB_SSLMODE")
 
 	connectionString := "postgres://" + dbUsername + ":" + dbPassword + "@" + dbHost + ":" + dbPort + "/" + dbTable + "?sslmode=" + dbSSLMode
-	db, err := sqlx.Connect("postgres", connectionString)
+	
+	// Add retry mechanism for database connection
+	var db *sqlx.DB
+	var err error
+	maxRetries := 10
+	retryDelay := 3 * time.Second
+
+	for i := 0; i < maxRetries; i++ {
+		db, err = sqlx.Connect("postgres", connectionString)
+		if err != nil {
+			log.Printf("Failed to connect to database (attempt %d/%d): %v", i+1, maxRetries, err)
+			time.Sleep(retryDelay)
+			continue
+		}
+		
+		// Test the connection
+		err = db.Ping()
+		if err == nil {
+			break
+		}
+		log.Printf("Database not ready (attempt %d/%d): %v", i+1, maxRetries, err)
+		time.Sleep(retryDelay)
+	}
+
 	if err != nil {
 		return Store{}, err
 	}
